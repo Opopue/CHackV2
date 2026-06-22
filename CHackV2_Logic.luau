@@ -16,6 +16,12 @@ local RunService = ch.RunService
 local HttpService = ch.HttpService
 local fpsLabel = ch.fpsLabel
 local watermarkLabel = ch.watermarkLabel
+local setOn = ch.setOn
+local applyTheme = ch.applyTheme
+local colorToString = ch.colorToString
+local parseColor = ch.parseColor
+local R15_BONES = ch.R15_BONES
+local R6_BONES = ch.R6_BONES
 local flySpeedBox = ch.flySpeedBox
 local speedBox = ch.speedBox
 local espTextBox = ch.espTextBox
@@ -36,10 +42,29 @@ local aimTargetBtn = ch.aimTargetBtn
 local saveBtn = ch.saveBtn
 local loadBtn = ch.loadBtn
 local applyThemeBtn = ch.applyThemeBtn
-local setOn = ch.setOn
-local applyTheme = ch.applyTheme
-local colorToString = ch.colorToString
-local parseColor = ch.parseColor
+local tpBtn = ch.tpBtn
+local tpCoordsBtn = ch.tpCoordsBtn
+local btnESP = ch.btnESP
+local btnFill = ch.btnFill
+local btnNames = ch.btnNames
+local btnHealth = ch.btnHealth
+local btnRange = ch.btnRange
+local btnSkel = ch.btnSkel
+local btnFPS = ch.btnFPS
+local btnWM = ch.btnWM
+local btnFly = ch.btnFly
+local btnSpeed = ch.btnSpeed
+local btnNoclip = ch.btnNoclip
+local btnGod = ch.btnGod
+local btnJump = ch.btnJump
+local btnInvis = ch.btnInvis
+local btnAFK = ch.btnAFK
+local btnFreecam = ch.btnFreecam
+local btnFOV = ch.btnFOV
+local btnTPDist = ch.btnTPDist
+local btnAim = ch.btnAim
+local btnSilent = ch.btnSilent
+local btnRecoil = ch.btnRecoil
 local flySpeed = ch.flySpeed
 local speedValue = ch.speedValue
 local espTextSize = ch.espTextSize
@@ -70,8 +95,6 @@ local defaultCamMin = ch.defaultCamMin
 local defaultCamMax = ch.defaultCamMax
 local FPS_UPDATE_INTERVAL = ch.FPS_UPDATE_INTERVAL
 local CONFIG_PATH = ch.CONFIG_PATH
-local R15_BONES = ch.R15_BONES
-local R6_BONES = ch.R6_BONES
 local silentAimTarget = nil
 
 local function getBoneList(char)
@@ -84,78 +107,43 @@ local function getCharacterBounds(char)
     local head = char:FindFirstChild("Head")
     local hum = char:FindFirstChildOfClass("Humanoid")
     if not hrp or not head then return nil end
-
     local topY = head.Position.Y + head.Size.Y * 0.5
-    local foot = char:FindFirstChild("LeftFoot") or char:FindFirstChild("RightFoot")
-        or char:FindFirstChild("Left Leg") or char:FindFirstChild("Right Leg")
+    local foot = char:FindFirstChild("LeftFoot") or char:FindFirstChild("RightFoot") or char:FindFirstChild("Left Leg") or char:FindFirstChild("Right Leg")
     local bottomY
-    if foot then
-        bottomY = foot.Position.Y - foot.Size.Y * 0.5
-    else
-        local hip = hum and hum.HipHeight or 2
-        bottomY = hrp.Position.Y - hrp.Size.Y * 0.5 - hip
-    end
-
-    local leftPart = char:FindFirstChild("LeftHand") or char:FindFirstChild("Left Arm")
-        or char:FindFirstChild("LeftUpperArm")
-    local rightPart = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
-        or char:FindFirstChild("RightUpperArm")
+    if foot then bottomY = foot.Position.Y - foot.Size.Y * 0.5
+    else local hip = hum and hum.HipHeight or 2 bottomY = hrp.Position.Y - hrp.Size.Y * 0.5 - hip end
+    local leftPart = char:FindFirstChild("LeftHand") or char:FindFirstChild("Left Arm") or char:FindFirstChild("LeftUpperArm")
+    local rightPart = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm") or char:FindFirstChild("RightUpperArm")
     local halfWidth = 1.2
-    if leftPart and rightPart then
-        halfWidth = math.max(halfWidth, (leftPart.Position - rightPart.Position).Magnitude * 0.5 + 0.3)
-    end
-
+    if leftPart and rightPart then halfWidth = math.max(halfWidth, (leftPart.Position - rightPart.Position).Magnitude * 0.5 + 0.3) end
     local topWorld = Vector3.new(hrp.Position.X, topY, hrp.Position.Z)
     local botWorld = Vector3.new(hrp.Position.X, bottomY, hrp.Position.Z)
     local leftWorld = hrp.Position - hrp.CFrame.RightVector * halfWidth
     local rightWorld = hrp.Position + hrp.CFrame.RightVector * halfWidth
-
     local topS, topVis = Camera:WorldToViewportPoint(topWorld)
     local botS, botVis = Camera:WorldToViewportPoint(botWorld)
     local leftS = Camera:WorldToViewportPoint(leftWorld)
     local rightS = Camera:WorldToViewportPoint(rightWorld)
-
     if not topVis and not botVis then return nil end
-
     local minX = math.min(topS.X, botS.X, leftS.X, rightS.X)
     local maxX = math.max(topS.X, botS.X, leftS.X, rightS.X)
     local minY = math.min(topS.Y, botS.Y)
     local maxY = math.max(topS.Y, botS.Y)
-
-    return {
-        x = minX, y = minY,
-        w = math.max(maxX - minX, 4),
-        h = math.max(maxY - minY, 8),
-        cx = (minX + maxX) * 0.5,
-        valid = true,
-    }
+    return { x = minX, y = minY, w = math.max(maxX - minX, 4), h = math.max(maxY - minY, 8), cx = (minX + maxX) * 0.5, valid = true }
 end
 
 local function createEntry(p)
     local box = Drawing.new("Square")
-    box.Visible = false
-    box.Color = espBoxColor
-    box.Thickness = 2
-    box.Filled = false
+    box.Visible = false box.Color = espBoxColor box.Thickness = 2 box.Filled = false
     local boxFill = Drawing.new("Square")
-    boxFill.Visible = false
-    boxFill.Color = espBoxColor
-    boxFill.Filled = true
-    boxFill.Transparency = 0.65
+    boxFill.Visible = false boxFill.Color = espBoxColor boxFill.Filled = true boxFill.Transparency = 0.65
     local tag = Drawing.new("Text")
-    tag.Visible = false
-    tag.Color = Color3.fromRGB(255, 255, 255)
-    tag.Size = espTextSize
-    tag.Center = true
-    tag.Outline = true
-    tag.OutlineColor = Color3.fromRGB(0, 0, 0)
-    tag.Text = p.Name
+    tag.Visible = false tag.Color = Color3.fromRGB(255, 255, 255) tag.Size = espTextSize
+    tag.Center = true tag.Outline = true tag.OutlineColor = Color3.fromRGB(0, 0, 0) tag.Text = p.Name
     local skeletonLines = {}
     for i = 1, 15 do
         local line = Drawing.new("Line")
-        line.Visible = false
-        line.Color = espSkelColor
-        line.Thickness = 1.5
+        line.Visible = false line.Color = espSkelColor line.Thickness = 1.5
         skeletonLines[i] = line
     end
     espTable[p] = { box = box, boxFill = boxFill, tag = tag, skeletonLines = skeletonLines }
@@ -164,9 +152,7 @@ end
 local function removeEntry(p)
     local data = espTable[p]
     if not data then return end
-    data.box:Remove()
-    data.boxFill:Remove()
-    data.tag:Remove()
+    data.box:Remove() data.boxFill:Remove() data.tag:Remove()
     if data.hpBg then data.hpBg:Remove() end
     if data.hpBar then data.hpBar:Remove() end
     if data.distLabel then data.distLabel:Remove() end
@@ -203,10 +189,8 @@ end
 
 local function startFreecam()
     freecamPart = Instance.new("Part", workspace)
-    freecamPart.Anchored = true
-    freecamPart.CanCollide = false
-    freecamPart.Transparency = 1
-    freecamPart.Size = Vector3.new(1, 1, 1)
+    freecamPart.Anchored = true freecamPart.CanCollide = false
+    freecamPart.Transparency = 1 freecamPart.Size = Vector3.new(1, 1, 1)
     freecamPart.CFrame = Camera.CFrame
     freecamYaw, freecamPitch = 0, 0
     local char = LocalPlayer.Character
@@ -251,9 +235,7 @@ end
 
 local function getAimPart(char)
     if not char then return nil end
-    if aimTargetHead then
-        return char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
-    end
+    if aimTargetHead then return char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart") end
     return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
 end
 
@@ -275,8 +257,6 @@ local function getNearestTarget()
     end
     return bestPart
 end
-
-local silentAimTarget = nil
 
 local function setupSilentAim()
     if silentAimHooked then return end
@@ -329,25 +309,17 @@ local function updateNoRecoil()
 end
 
 local function refreshFpsDisplay(delta)
-    if delta > 0 then
-        fpsSum += 1 / delta
-        fpsCount += 1
-    end
+    if delta > 0 then fpsSum = fpsSum + 1 / delta fpsCount = fpsCount + 1 end
     local now = tick()
     if now - lastFpsRefresh >= FPS_UPDATE_INTERVAL then
-        if fpsCount > 0 then
-            displayedFps = tostring(math.floor(fpsSum / fpsCount))
-        end
+        if fpsCount > 0 then displayedFps = tostring(math.floor(fpsSum / fpsCount)) end
         fpsSum, fpsCount = 0, 0
         lastFpsRefresh = now
     end
 end
 
 local function updateWatermark()
-    if not state.watermark then
-        watermarkLabel.Visible = false
-        return
-    end
+    if not state.watermark then watermarkLabel.Visible = false return end
     watermarkLabel.Visible = true
     watermarkLabel.Text = "CHack loaded | " .. displayedFps .. " FPS"
     local tw = watermarkLabel.TextBounds and watermarkLabel.TextBounds.X or (#watermarkLabel.Text * 7)
@@ -377,6 +349,8 @@ local function applyThemeFromInputs()
     applyTheme()
 end
 
+local toggle
+
 local function saveConfig()
     if not writefile then warn("[CHack] writefile nicht verfuegbar") return end
     local keyData = {}
@@ -396,8 +370,6 @@ local function saveConfig()
     local ok, json = pcall(function() return HttpService:JSONEncode(data) end)
     if ok then writefile(CONFIG_PATH, json) print("[CHack] Config gespeichert") end
 end
-
-local toggle
 
 local function loadConfig()
     if not readfile or not isfile or not isfile(CONFIG_PATH) then
@@ -454,7 +426,6 @@ end
 
 saveBtn.MouseButton1Click:Connect(saveConfig)
 loadBtn.MouseButton1Click:Connect(loadConfig)
-
 applyThemeBtn.MouseButton1Click:Connect(applyThemeFromInputs)
 
 aimModeBtn.MouseButton1Click:Connect(function()
@@ -483,10 +454,7 @@ toggle = function(key)
         local char = LocalPlayer.Character
         if char then
             local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum.MaxHealth = state.god and math.huge or 100
-                hum.Health = hum.MaxHealth
-            end
+            if hum then hum.MaxHealth = state.god and math.huge or 100 hum.Health = hum.MaxHealth end
         end
     elseif key == "antiafk" then
         if state.antiafk then
@@ -526,7 +494,7 @@ btnAim.MouseButton1Click:Connect(function() toggle("aimbot") end)
 btnSilent.MouseButton1Click:Connect(function() toggle("silentaim") end)
 btnRecoil.MouseButton1Click:Connect(function() toggle("norecoil") end)
 
-flySpeedBox.FocusLost:Connect(function() flySpeed = tonumber(flySpeedBox.Text) or flySpeed; ch.flySpeed = flySpeed end)
+flySpeedBox.FocusLost:Connect(function() flySpeed = tonumber(flySpeedBox.Text) or flySpeed end)
 speedBox.FocusLost:Connect(function()
     speedValue = math.clamp(tonumber(speedBox.Text) or speedValue, 16, 500)
     speedBox.Text = tostring(speedValue)
@@ -612,15 +580,12 @@ end)
 
 UIS.InputChanged:Connect(function(input)
     if state.freecam and freecamPart and input.UserInputType == Enum.UserInputType.MouseMovement then
-        freecamYaw -= input.Delta.X * 0.3
+        freecamYaw = freecamYaw - input.Delta.X * 0.3
         freecamPitch = math.clamp(freecamPitch - input.Delta.Y * 0.3, -80, 80)
         freecamPart.CFrame = CFrame.new(freecamPart.CFrame.Position)
             * CFrame.Angles(0, math.rad(freecamYaw), 0)
             * CFrame.Angles(math.rad(freecamPitch), 0, 0)
         Camera.CFrame = freecamPart.CFrame
-    elseif dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        panel.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
@@ -629,7 +594,6 @@ RunService.RenderStepped:Connect(function()
     local delta = now - lastTime
     lastTime = now
     refreshFpsDisplay(delta)
-
     if state.fps then fpsLabel.Text = "FPS: " .. displayedFps end
     updateWatermark()
 
@@ -641,8 +605,7 @@ RunService.RenderStepped:Connect(function()
             if hum and hum.Health > 0 then
                 local bounds = getCharacterBounds(char)
                 if bounds and bounds.valid then
-                    box.Color = espBoxColor
-                    boxFill.Color = espBoxColor
+                    box.Color = espBoxColor boxFill.Color = espBoxColor
                     box.Size = Vector2.new(bounds.w, bounds.h)
                     box.Position = Vector2.new(bounds.x, bounds.y)
                     box.Visible = state.esp
@@ -657,31 +620,22 @@ RunService.RenderStepped:Connect(function()
                         local hpRatio = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
                         if not data.hpBg then
                             data.hpBg = Drawing.new("Square")
-                            data.hpBg.Filled = true
-                            data.hpBg.Color = Color3.fromRGB(0, 0, 0)
-                            data.hpBg.Transparency = 0.5
-                            data.hpBar = Drawing.new("Square")
-                            data.hpBar.Filled = true
+                            data.hpBg.Filled = true data.hpBg.Color = Color3.fromRGB(0, 0, 0) data.hpBg.Transparency = 0.5
+                            data.hpBar = Drawing.new("Square") data.hpBar.Filled = true
                         end
                         local barH = bounds.h * hpRatio
                         local barX = bounds.x + bounds.w + 3
-                        data.hpBg.Size = Vector2.new(4, bounds.h)
-                        data.hpBg.Position = Vector2.new(barX, bounds.y)
-                        data.hpBg.Visible = true
-                        data.hpBar.Size = Vector2.new(4, barH)
-                        data.hpBar.Position = Vector2.new(barX, bounds.y + bounds.h - barH)
-                        data.hpBar.Color = Color3.fromRGB(math.floor(255 * (1 - hpRatio)), math.floor(255 * hpRatio), 0)
-                        data.hpBar.Visible = true
+                        data.hpBg.Size = Vector2.new(4, bounds.h) data.hpBg.Position = Vector2.new(barX, bounds.y) data.hpBg.Visible = true
+                        data.hpBar.Size = Vector2.new(4, barH) data.hpBar.Position = Vector2.new(barX, bounds.y + bounds.h - barH)
+                        data.hpBar.Color = Color3.fromRGB(math.floor(255 * (1 - hpRatio)), math.floor(255 * hpRatio), 0) data.hpBar.Visible = true
                     else
                         if data.hpBg then data.hpBg.Visible = false end
                         if data.hpBar then data.hpBar.Visible = false end
                     end
                     if state.range then
                         if not data.distLabel then
-                            data.distLabel = Drawing.new("Text")
-                            data.distLabel.Center = false
-                            data.distLabel.Outline = true
-                            data.distLabel.OutlineColor = Color3.fromRGB(0, 0, 0)
+                            data.distLabel = Drawing.new("Text") data.distLabel.Center = false
+                            data.distLabel.Outline = true data.distLabel.OutlineColor = Color3.fromRGB(0, 0, 0)
                             data.distLabel.Color = Color3.fromRGB(220, 220, 220)
                         end
                         data.distLabel.Size = espTextSize
@@ -693,9 +647,7 @@ RunService.RenderStepped:Connect(function()
                         data.distLabel.Text = dist .. " studs"
                         data.distLabel.Position = Vector2.new(bounds.x, bounds.y + bounds.h + 3)
                         data.distLabel.Visible = true
-                    elseif data.distLabel then
-                        data.distLabel.Visible = false
-                    end
+                    elseif data.distLabel then data.distLabel.Visible = false end
                     if state.skeleton then
                         local bones = getBoneList(char)
                         local lineIndex = 1
@@ -711,33 +663,23 @@ RunService.RenderStepped:Connect(function()
                                     line.From = Vector2.new(aPos.X, aPos.Y)
                                     line.To = Vector2.new(bPos.X, bPos.Y)
                                     line.Visible = true
-                                else
-                                    line.Visible = false
-                                end
-                            elseif line then
-                                line.Visible = false
-                            end
-                            lineIndex += 1
+                                else line.Visible = false end
+                            elseif line then line.Visible = false end
+                            lineIndex = lineIndex + 1
                         end
-                        for i = lineIndex, #data.skeletonLines do
-                            data.skeletonLines[i].Visible = false
-                        end
+                        for i = lineIndex, #data.skeletonLines do data.skeletonLines[i].Visible = false end
                     else
                         for _, line in ipairs(data.skeletonLines) do line.Visible = false end
                     end
                 else
-                    box.Visible = false
-                    boxFill.Visible = false
-                    tag.Visible = false
+                    box.Visible = false boxFill.Visible = false tag.Visible = false
                     if data.hpBg then data.hpBg.Visible = false end
                     if data.hpBar then data.hpBar.Visible = false end
                     if data.distLabel then data.distLabel.Visible = false end
                     for _, line in ipairs(data.skeletonLines) do line.Visible = false end
                 end
             else
-                box.Visible = false
-                boxFill.Visible = false
-                tag.Visible = false
+                box.Visible = false boxFill.Visible = false tag.Visible = false
                 if data.hpBg then data.hpBg.Visible = false end
                 if data.hpBar then data.hpBar.Visible = false end
                 if data.distLabel then data.distLabel.Visible = false end
@@ -749,12 +691,12 @@ RunService.RenderStepped:Connect(function()
     if state.fly and bodyVel and bodyGyro then
         local dir = Vector3.zero
         local cf = Camera.CFrame
-        if UIS:IsKeyDown(Enum.KeyCode.W) then dir += cf.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.S) then dir -= cf.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.A) then dir -= cf.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.D) then dir += cf.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0, 1, 0) end
-        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir -= Vector3.new(0, 1, 0) end
+        if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + cf.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - cf.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - cf.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + cf.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
         bodyVel.Velocity = dir.Magnitude > 0 and dir.Unit * flySpeed or Vector3.zero
         bodyGyro.CFrame = cf
     end
@@ -762,13 +704,13 @@ RunService.RenderStepped:Connect(function()
     if state.freecam and freecamPart then
         local dir = Vector3.zero
         local cf = freecamPart.CFrame
-        if UIS:IsKeyDown(Enum.KeyCode.W) then dir += cf.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.S) then dir -= cf.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.A) then dir -= cf.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.D) then dir += cf.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0, 1, 0) end
-        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir -= Vector3.new(0, 1, 0) end
-        freecamPart.CFrame += dir * freecamSpeed
+        if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + cf.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - cf.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - cf.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + cf.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0, 1, 0) end
+        freecamPart.CFrame = freecamPart.CFrame + dir * freecamSpeed
         Camera.CFrame = freecamPart.CFrame
     end
 
@@ -786,7 +728,6 @@ RunService.RenderStepped:Connect(function()
     if state.invisible then setInvisible(true) end
     if state.fov then applyFOV() end
     if state.thirdperson then applyThirdPerson() end
-
     updateSilentAim()
     updateAimbot()
     updateNoRecoil()
