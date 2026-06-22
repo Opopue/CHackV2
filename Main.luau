@@ -10,7 +10,7 @@ local function load(url)
     end
 end
 
-local base = "https://raw.githubusercontent.com/Opopue/CHackV1/main/"
+local base = "https://raw.githubusercontent.com/Opopue/CHackV2/main/"
 
 load(base .. "CHackV2_Core.luau")
 task.wait(0.2)
