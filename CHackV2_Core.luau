@@ -585,4 +585,12 @@ _G.CH = {
     panelColorBox = panelColorBox, textColorBox = textColorBox, strokeColorBox = strokeColorBox,
     aimModeBtn = aimModeBtn, aimTargetBtn = aimTargetBtn,
     saveBtn = saveBtn, loadBtn = loadBtn, applyThemeBtn = applyThemeBtn,
+    btnESP = btnESP, btnFill = btnFill, btnNames = btnNames,
+    btnHealth = btnHealth, btnRange = btnRange, btnSkel = btnSkel,
+    btnFPS = btnFPS, btnWM = btnWM, btnFly = btnFly,
+    btnSpeed = btnSpeed, btnNoclip = btnNoclip, btnGod = btnGod,
+    btnJump = btnJump, btnInvis = btnInvis, btnAFK = btnAFK,
+    btnFreecam = btnFreecam, btnFOV = btnFOV, btnTPDist = btnTPDist,
+    btnAim = btnAim, btnSilent = btnSilent, btnRecoil = btnRecoil,
+    tpBtn = tpBtn, tpCoordsBtn = tpCoordsBtn,
 }
