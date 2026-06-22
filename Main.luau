@@ -13,7 +13,8 @@ end
 local base = "https://raw.githubusercontent.com/Opopue/CHackV2/main/"
 
 load(base .. "CHackV2_Core.luau")
-task.wait(0.2)
+task.wait(0.5)
 load(base .. "CHackV2_Logic.luau")
+task.wait(0.5)
 
 print("CHack loaded! RShift to open.")
